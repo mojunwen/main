@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    
+    <!--require原理-->
+    <script>
+        // var module = {
+        //     exports: {}
+        // };
+
+        // (function(module, exports){
+        //     exports.multiply = function (n) {
+        //         return n * 1000;
+        //     }
+        // }(module, module.exports));
+
+        // var f = module.exports.multiply;
+        // console.log(f(4))
+    </script>
+    <!--阮一峰require.js简单实现-->
+
+    <script>
+        /*
+            resolve : 解决;
+            require : 要求;
+            module  : 模块;
+            exports : 出口;
+        */
+        function require(p) {
+            var path = require.resolve(p);
+            var mod  = require.modules[path];
+            if(!mod) throw new Error('failed to require "' + p + '"');
+            if(!mod.exports) {
+                mod.exports = {};
+                mod.call(mod.exports, mod, mod.exports, require.relative(path));
+            }
+            return mod.expports;
+        }
+
+        require.modules = {};
+
+        require.resolve = function (path){
+            var orig = path;
+            var reg = path + '.js';
+            var index = path + '/index.js';
+            return require.modules[reg] && reg
+                || require.modules[index] && index 
+                || orig;
+        };
+
+        require.register = function (path, fn){
+            require.modules[path] = fn;
+        };
+
+        require.relative = function (parent) {
+            return function (p){
+                if('.' != p.charAt(0)) return require(p);
+                var path = parent.split('/');
+                var segs = p.split('/');
+                path.pop();
+
+                for(var i = 0; i < segs.length; i++){
+                    var seg = segs[i];
+                    if('..' == seg) path.pop();
+                    else if('.' != seg) path.push(seg);
+                }
+
+                return require(path.join('/'));
+            };
+        };
+    </script>
+</body>
+</html>
